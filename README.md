@@ -1,10 +1,10 @@
-# UnitOS
+# UnitAIOS
 
-> One-line description goes here — what UnitOS is.
+> One-line description goes here — what UnitAIOS is.
 
 ## Overview
 
-UnitOS is a new open-source project. _Replace this section with the real
+UnitAIOS is a new open-source project. _Replace this section with the real
 vision once it's defined._
 
 ## Status
@@ -14,8 +14,8 @@ vision once it's defined._
 ## Getting Started
 
 ```bash
-git clone git@github.com:UnitOS/UnitOS.git
-cd UnitOS
+git clone git@github.com:UnitAIOS/UnitAIOS.git
+cd UnitAIOS
 ```
 
 _Build and run instructions to be added._
