@@ -1,0 +1,9 @@
+# IDE / editor
+.idea/
+.vscode/
+
+# Obsidian vault config
+.obsidian/
+
+# OS
+.DS_Store
