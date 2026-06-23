@@ -4,9 +4,9 @@
 |-------|-------|
 | Project | UnitAIOS |
 | Document | Business Requirements Document |
-| Version | 0.4 (Draft) |
+| Version | 0.5 (Draft) |
 | Status | Draft for review |
-| Date | 2026-06-23 |
+| Date | 2026-06-24 |
 | Author | Gevorg Aznauryan |
 | Audience | Founders, architects, tool developers, integration partners |
 
@@ -38,6 +38,14 @@
 > analog of a personal goal/purpose model — reframed around mandate, OKRs, and
 > policy, not personal facets.
 
+> **v0.5 change note.** This revision deepens the **extension/plugin model**
+> (§7.6 FR-EXT, §7.13 FR-WEB) along WordPress-plugin lines: an extension carries
+> its own **configuration** exposed in the admin UI, can be **enabled, disabled,
+> and configured** by the operator, and may contribute its **own UI surface**
+> served through the UnitAIOS web interface. Extension management and
+> extension-contributed UIs are RBAC-gated and subject to the instance's security
+> and journaling guarantees.
+
 ---
 
 ## 1. Executive summary
@@ -64,8 +72,11 @@ obtain self-service through an authenticated **web console**.
 
 Every instance keeps a mandatory **journal** of the requests it receives. It hosts
 a **scheduler/calendar** that can trigger actions at a point in time and run
-**recurring workflows**. It can be **extended with new tools** that follow defined
-authoring rules and interaction protocols. It maintains a local **vector knowledge
+**recurring workflows**. It can be **extended with new tools and
+extensions** that follow defined authoring rules and interaction protocols; an
+extension carries its own configuration in the admin UI, can be enabled, disabled,
+and configured, and may contribute its own UI surface served through the web
+interface — much like a plugin system. It maintains a local **vector knowledge
 base** supporting retrieval-augmented generation (RAG): the instance introspects
 itself into **knowledge-atoms**, and operators can **ingest** additional data as
 knowledge sources, classify it as static/shared or per-principal, and attach
@@ -114,6 +125,7 @@ knowledge-bearing, and conversationally explainable through its own concierge.
 | BR-12 | Maintain a local vector knowledge base (RAG) into which arbitrary data can be ingested as knowledge sources, classified, and refreshed on a schedule. |
 | BR-13 | Serve, from a built-in web server, both the public endpoint and an authenticated management/data dashboard. |
 | BR-14 | Optionally let an instance articulate its business unit's purpose, objectives, policies, and KPIs (an Organization Charter) and make that articulation consumable by the concierge, by discovery, and by access policy. |
+| BR-15 | Let the operator manage extensions like a plugin system — enable, disable, and configure each extension through the admin UI — and let an extension contribute its own UI served through the web interface. |
 
 ## 4. Scope
 
@@ -126,6 +138,7 @@ knowledge-bearing, and conversationally explainable through its own concierge.
 - A public unauthenticated information endpoint.
 - Mandatory request journaling.
 - A tool extension mechanism — including extension-contributed MCP tools — plus the rules/standards and interaction protocols for authoring tools.
+- A plugin-style extension lifecycle: enable, disable, and configure extensions through the admin UI, including per-extension configuration and optional extension-contributed UI surfaces served via the web interface.
 - A built-in scheduler/calendar with time-triggered actions and recurring workflows.
 - An instance initialization script/procedure.
 - Self-introspection and knowledge-atom generation.
@@ -166,7 +179,14 @@ knowledge-bearing, and conversationally explainable through its own concierge.
   core tools and the tools contributed by installed extensions, presenting them
   uniformly and applying access control and journaling to all of them.
 - **Extension** — an installable unit that adds capability to an instance and may
-  contribute its own MCP tools, which become available through the gateway.
+  contribute its own MCP tools (through the gateway), its own configuration (in the
+  admin UI), and its own UI surface (through the web interface). It has a lifecycle:
+  install, enable, disable, configure, remove.
+- **Extension configuration** — the settings an extension declares and the operator
+  sets through the admin UI to control that extension's behavior.
+- **Extension UI** — an optional user-interface surface contributed by an extension
+  and served through the UnitAIOS web interface, subject to RBAC and the instance's
+  security guarantees.
 - **Principal** — an authenticated identity: a peer instance, an AI agent, or a
   human user.
 - **Role / group** — a named authorization unit (the role in role-based access
@@ -290,6 +310,10 @@ knowledge-bearing, and conversationally explainable through its own concierge.
 | FR-EXT-5 | The project shall define the interaction protocols between the instance and its tools (how tools are invoked, how they return results, how they report errors). |
 | FR-EXT-6 | An **extension** shall be able to contribute its own MCP tools, which the instance surfaces through the MCP gateway (FR-MCP-5..7). |
 | FR-EXT-7 | Installing, updating, or removing an extension shall not weaken the access-control or journaling guarantees applied to its tools. |
+| FR-EXT-8 | An extension shall have a managed lifecycle — at minimum **enable, disable, and configure** — that the operator controls through the admin UI (FR-WEB), analogous to a plugin system. A disabled extension shall expose no tools or UI and run no workflows. |
+| FR-EXT-9 | An extension shall be able to declare its own **configuration** (the settings it accepts); the operator shall set and change those settings through the admin UI, and the instance shall make the current configuration available to the extension at runtime. |
+| FR-EXT-10 | An extension **may** contribute its own **UI surface**, served through the UnitAIOS web interface; if it does, it shall declare what that UI needs to be hosted (FR-WEB-7). |
+| FR-EXT-11 | Extension configuration values and the act of enabling/disabling/configuring an extension shall be RBAC-gated (FR-ACL) and journaled (FR-LOG); secrets in extension configuration shall not be exposed via the public endpoint, concierge, or knowledge base (NFR-SEC-2). |
 
 ### 7.7 Instance initialization (FR-INIT)
 
@@ -365,6 +389,8 @@ knowledge-bearing, and conversationally explainable through its own concierge.
 | FR-WEB-4 | The dashboard shall provide management surfaces for the instance, including the RBAC management surface (FR-ACL-9), access-key management (FR-AUTH-9), and scheduler/workflow management (FR-SCHED-6). |
 | FR-WEB-5 | The dashboard shall provide an interface to browse the instance's data (e.g. knowledge sources/atoms), filtered by the viewing principal's access level. |
 | FR-WEB-6 | The dashboard shall never expose data or actions the authenticated principal's access level does not authorize. |
+| FR-WEB-7 | The admin UI shall provide an **extension management surface**: list installed extensions and enable, disable, and configure each one (FR-EXT-8/9), with changes RBAC-gated and journaled. |
+| FR-WEB-8 | The web interface shall be able to **host extension-contributed UI surfaces** (FR-EXT-10), presenting them to authorized principals only and isolating them so an extension UI cannot exceed its access level or compromise the host instance. |
 
 ### 7.14 Organization Charter (FR-CHTR)
 
@@ -427,6 +453,10 @@ knowledge-bearing, and conversationally explainable through its own concierge.
 - **UC-12 — Mandate discovery.** A peer instance reads the published Mandate facet
   via the public endpoint and uses it to decide whether to route a request to this
   instance, without gaining access to internal Charter facets.
+- **UC-13 — Manage an extension.** An operator opens the admin UI, enables an
+  installed extension, sets its configuration, and (if the extension provides one)
+  reaches its UI through the web interface; disabling it removes its tools and UI.
+  Each change is RBAC-gated and journaled.
 
 ## 9. Non-functional requirements
 
@@ -478,6 +508,11 @@ knowledge-bearing, and conversationally explainable through its own concierge.
   business units rather than individuals. Its value is realized only through named
   consumers (concierge, public discovery, access policy); it must not become an
   unconsumed artifact. (Stakeholder decision.)
+- **Constraint — Extension model.** Extensions follow a plugin-style lifecycle
+  (enable/disable/configure) managed through the admin UI, may declare their own
+  configuration, and may contribute their own UI served through the web interface.
+  All of this remains subject to RBAC, journaling, and the instance's security
+  guarantees. (Stakeholder decision.)
 - **Constraint — Vector store.** The knowledge base is backed by a **vector store**
   (referred to generically by that term throughout this BRD). The specific vector
   store product is a technology choice for the Technical Design Document, which must
@@ -512,6 +547,10 @@ knowledge-bearing, and conversationally explainable through its own concierge.
 - Where a Charter is present, the concierge answers a purpose-aware question from it
   (filtered by access level), a peer can read the published Mandate but not internal
   facets, and an instance with no Charter still operates normally (FR-CHTR).
+- An operator can enable, configure, disable, and re-enable an extension from the
+  admin UI; a disabled extension exposes no tools or UI; and an extension's own UI,
+  when present, is reachable through the web interface only by authorized principals
+  (FR-EXT-8/9/10, FR-WEB-7/8).
 
 ## 12. Risks and open questions
 
@@ -530,6 +569,7 @@ knowledge-bearing, and conversationally explainable through its own concierge.
 | R-11 | RBAC granularity at scale — managing many individual-principal grants alongside roles risks policy sprawl; the TDD should define how individual grants are audited and kept manageable. |
 | R-12 | Charter as decorative artifact — the failure mode is an unconsumed mission statement. Mitigation: named consumers (concierge, discovery, policy) are required (FR-CHTR-5/8/9); the dashboard should surface whether/how the Charter is being used. |
 | R-13 | Charter governance — organizational purpose is contested and political; authorship, versioning, and amendment approval need clear ownership. Addressed in part by FR-CHTR-6 (operator-owned, journaled amendments); residual — multi-stakeholder approval workflow. |
+| R-14 | Extension-contributed UI as attack/trust surface — hosting third-party UI in the web interface risks privilege escalation, data leakage, and host compromise. Addressed in principle by FR-WEB-8 (isolation, access-level confinement); the TDD must specify the isolation/sandboxing model, the UI hosting contract, and extension-config secret handling. |
 
 ## 13. Next steps
 
@@ -541,5 +581,7 @@ knowledge-bearing, and conversationally explainable through its own concierge.
    RAG and ingestion/refresh design, scheduler design, web server/dashboard,
    Organization Charter facet model and consumers, init script).
 3. Draft the **Tool Authoring Standard** and **Tool Interaction Protocol** as
-   separate documents referenced by FR-EXT, covering extension-contributed tools.
+   separate documents referenced by FR-EXT, covering extension-contributed tools,
+   the extension configuration schema, the extension lifecycle, and the
+   extension-UI hosting/isolation contract.
 4. Prototype the initialization procedure for a minimal instance.
