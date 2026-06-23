@@ -4,7 +4,7 @@
 |-------|-------|
 | Project | UnitAIOS |
 | Document | Business Requirements Document |
-| Version | 0.3 (Draft) |
+| Version | 0.4 (Draft) |
 | Status | Draft for review |
 | Date | 2026-06-23 |
 | Author | Gevorg Aznauryan |
@@ -27,6 +27,16 @@
 > refresh policies; and a **built-in web server** serving both the public endpoint
 > and an authenticated management dashboard. New material is marked with its
 > requirement IDs throughout.
+
+> **v0.4 change note.** This revision adds an **optional Organization Charter**
+> (§7.14, FR-CHTR): a structured, RBAC-gated articulation of a business unit's
+> purpose, objectives, policies, strategies, KPIs, and stakeholders — the
+> instance's own "ideal-state" self-model. It is *not* part of the minimal
+> instance; its value is realized only through named consumers (the concierge,
+> public discovery, and access policy). Because UnitAIOS is built for organizations
+> and business units rather than individuals, the Charter is the organizational
+> analog of a personal goal/purpose model — reframed around mandate, OKRs, and
+> policy, not personal facets.
 
 ---
 
@@ -64,6 +74,14 @@ a built-in **AI concierge** that is an integral part of every UnitAIOS instance.
 A **built-in web server** serves the public endpoint and an authenticated
 **dashboard** for management and for browsing the instance's data.
 
+Optionally, an instance may carry an **Organization Charter** — a structured,
+access-controlled articulation of the business unit's purpose, objectives,
+policies, strategies, KPIs, and stakeholders. The Charter is the instance's own
+"ideal-state" self-model: the concierge consults it to answer purpose-aware
+questions, the public endpoint may publish its mandate facet for peer discovery,
+and access policy may draw on it for authority scope. It is optional and not part
+of a minimal instance.
+
 ## 2. Business context and vision
 
 The industry is moving toward a world where software systems and autonomous AI
@@ -95,6 +113,7 @@ knowledge-bearing, and conversationally explainable through its own concierge.
 | BR-11 | Provide a built-in scheduler/calendar that can trigger actions at a time and run recurring workflows. |
 | BR-12 | Maintain a local vector knowledge base (RAG) into which arbitrary data can be ingested as knowledge sources, classified, and refreshed on a schedule. |
 | BR-13 | Serve, from a built-in web server, both the public endpoint and an authenticated management/data dashboard. |
+| BR-14 | Optionally let an instance articulate its business unit's purpose, objectives, policies, and KPIs (an Organization Charter) and make that articulation consumable by the concierge, by discovery, and by access policy. |
 
 ## 4. Scope
 
@@ -113,6 +132,7 @@ knowledge-bearing, and conversationally explainable through its own concierge.
 - A local vector knowledge base (RAG): ingestion of arbitrary data as knowledge sources, static-vs-per-principal classification, and scheduled refresh policies.
 - The AI concierge backed by the local knowledge base.
 - A built-in web server serving the public endpoint and an authenticated dashboard for management and data browsing.
+- An optional Organization Charter — a structured, RBAC-gated articulation of the business unit's purpose, objectives, policies, strategies, KPIs, and stakeholders, consumed by the concierge, by public discovery (mandate facet), and by access policy.
 - Configurable connection modes (local and network).
 
 ### 4.2 Out of scope (this document)
@@ -182,6 +202,15 @@ knowledge-bearing, and conversationally explainable through its own concierge.
   schedule (e.g. daily, weekly).
 - **AI concierge** — the built-in agent that answers questions about the instance
   using the knowledge base.
+- **Organization Charter** — an optional, structured articulation of a business
+  unit's ideal state, organized into facets: **Mandate** (why the unit exists and
+  what it is authorized to do), **Objectives/OKRs** (measurable, time-bound aims),
+  **Policies/Constraints** (regulatory, budgetary, and risk boundaries),
+  **Strategies** (how objectives are pursued), **KPIs/Metrics** (current state vs.
+  ideal), and **Stakeholders** (peer units the instance serves or depends on). It
+  is a privileged category of knowledge, RBAC-gated per facet.
+- **Charter facet** — one named part of the Charter (Mandate, Objectives, Policies,
+  Strategies, KPIs, or Stakeholders), independently access-classified.
 - **Connection mode** — how a party reaches the instance: local (in-process /
   stdio) or network (HTTP).
 
@@ -337,6 +366,27 @@ knowledge-bearing, and conversationally explainable through its own concierge.
 | FR-WEB-5 | The dashboard shall provide an interface to browse the instance's data (e.g. knowledge sources/atoms), filtered by the viewing principal's access level. |
 | FR-WEB-6 | The dashboard shall never expose data or actions the authenticated principal's access level does not authorize. |
 
+### 7.14 Organization Charter (FR-CHTR)
+
+> **Optional capability.** The Charter is the organizational analog of a personal
+> goal/purpose model: a structured articulation of the business unit's ideal
+> state. It is *not* required for a minimal instance, and an instance without one
+> operates normally. Its requirements exist so that, where present, the Charter is
+> governed and consumed consistently rather than left as a decorative artifact.
+
+| ID | Requirement |
+|----|-------------|
+| FR-CHTR-1 | An instance **may** maintain an Organization Charter: a structured articulation of the business unit's purpose, objectives, policies, strategies, KPIs, and stakeholders. Its presence is optional. |
+| FR-CHTR-2 | The Charter shall be organized into named **facets** (Mandate, Objectives/OKRs, Policies/Constraints, Strategies, KPIs/Metrics, Stakeholders), each independently access-classified. |
+| FR-CHTR-3 | The Charter shall be represented as a privileged category of local knowledge — stored locally and indexed in the vector store like other knowledge (FR-KATOM) — so the concierge can retrieve it. |
+| FR-CHTR-4 | Each Charter facet shall be governed by RBAC (FR-ACL): a public **Mandate** facet may be published via the public endpoint, while internal facets (Objectives, Policies, KPIs, Strategies) are restricted. |
+| FR-CHTR-5 | The concierge shall consume the Charter so it can answer **purpose-aware** questions — e.g. whether a proposed action aligns with the unit's objectives or violates a policy — respecting the asking principal's access level (FR-CONC-4/5). |
+| FR-CHTR-6 | The Charter shall be **operator-owned**: only authorized principals may author or amend it, and every amendment shall be journaled (FR-LOG). |
+| FR-CHTR-7 | Charter facets shall support scheduled review/refresh via the scheduler (FR-SCHED) — e.g. a periodic objectives review. |
+| FR-CHTR-8 | When the Mandate facet is published, it shall be discoverable by peer instances so OS-to-OS interaction can route and negotiate by mandate, not only by tool list (FR-PUB, FR-MCP). |
+| FR-CHTR-9 | The Charter **may** inform access policy: the Mandate defines the unit's authority scope, which the operator may use as an input when defining RBAC grants. This is advisory, not an automatic grant mechanism. |
+| FR-CHTR-10 | An instance without a Charter shall function normally; the concierge shall answer from other knowledge, and no requirement above shall be a precondition for a minimal instance (FR-INIT-4). |
+
 ## 8. Key use cases
 
 - **UC-1 — Agent uses a tool.** An AI agent authenticates with an access key,
@@ -370,6 +420,13 @@ knowledge-bearing, and conversationally explainable through its own concierge.
   the knowledge base as a knowledge source, classifies it (static or
   per-principal), and attaches a daily refresh policy; the scheduler re-ingests it
   and the concierge answers from the refreshed content.
+- **UC-11 — Purpose-aware concierge answer.** A connected principal asks the
+  concierge whether a proposed action aligns with the unit's objectives or
+  violates a policy; the concierge answers from the Organization Charter, filtered
+  by the principal's access level.
+- **UC-12 — Mandate discovery.** A peer instance reads the published Mandate facet
+  via the public endpoint and uses it to decide whether to route a request to this
+  instance, without gaining access to internal Charter facets.
 
 ## 9. Non-functional requirements
 
@@ -416,6 +473,11 @@ knowledge-bearing, and conversationally explainable through its own concierge.
   presented through a single MCP gateway aggregating core and extension tools.
 - **Constraint — Web surface.** A built-in web server serves the public endpoint
   and an authenticated dashboard. (Stakeholder decision.)
+- **Constraint — Charter optionality.** The Organization Charter is an optional
+  capability, not part of the minimal instance, and built for organizations/
+  business units rather than individuals. Its value is realized only through named
+  consumers (concierge, public discovery, access policy); it must not become an
+  unconsumed artifact. (Stakeholder decision.)
 - **Constraint — Vector store.** The knowledge base is backed by a **vector store**
   (referred to generically by that term throughout this BRD). The specific vector
   store product is a technology choice for the Technical Design Document, which must
@@ -447,6 +509,9 @@ knowledge-bearing, and conversationally explainable through its own concierge.
   each run journaled (FR-SCHED, FR-LOG-8).
 - The concierge answers an instance/tool question correctly from the local
   knowledge base, filtered by access level (FR-CONC).
+- Where a Charter is present, the concierge answers a purpose-aware question from it
+  (filtered by access level), a peer can read the published Mandate but not internal
+  facets, and an instance with no Charter still operates normally (FR-CHTR).
 
 ## 12. Risks and open questions
 
@@ -463,6 +528,8 @@ knowledge-bearing, and conversationally explainable through its own concierge.
 | R-9 | Scheduler reliability and semantics — missed-run handling, overlapping runs, time-zone/clock assumptions, and failure surfacing (FR-SCHED, NFR-REL-2). |
 | R-10 | Dashboard attack surface — the authenticated web console expands the network surface; session, CSRF, and key-handling concerns to be addressed in the TDD (FR-WEB). |
 | R-11 | RBAC granularity at scale — managing many individual-principal grants alongside roles risks policy sprawl; the TDD should define how individual grants are audited and kept manageable. |
+| R-12 | Charter as decorative artifact — the failure mode is an unconsumed mission statement. Mitigation: named consumers (concierge, discovery, policy) are required (FR-CHTR-5/8/9); the dashboard should surface whether/how the Charter is being used. |
+| R-13 | Charter governance — organizational purpose is contested and political; authorship, versioning, and amendment approval need clear ownership. Addressed in part by FR-CHTR-6 (operator-owned, journaled amendments); residual — multi-stakeholder approval workflow. |
 
 ## 13. Next steps
 
@@ -471,8 +538,8 @@ knowledge-bearing, and conversationally explainable through its own concierge.
    base; dashboard existence moved in scope).
 2. Produce the Technical Design Document (architecture, MCP gateway contracts, auth
    and access-key mechanics, RBAC model, journal format, knowledge-base /
-   RAG and ingestion/refresh design, scheduler design, web server/dashboard, init
-   script).
+   RAG and ingestion/refresh design, scheduler design, web server/dashboard,
+   Organization Charter facet model and consumers, init script).
 3. Draft the **Tool Authoring Standard** and **Tool Interaction Protocol** as
    separate documents referenced by FR-EXT, covering extension-contributed tools.
 4. Prototype the initialization procedure for a minimal instance.
